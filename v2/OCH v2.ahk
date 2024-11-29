@@ -38,17 +38,20 @@ duration := ib.value
 
 try {
   if RunWait(get_command("scripts/configurate_monitor.ahk", 1))
-    throw Error("가상 모니터를 켜는증에 오류가 발생했습니다")
+    throw Error("가상 모니터를 켜는증에 오류가 발생했습니다 code 1")
 
   if RunWait(get_command("scripts/configurate_monitor.ahk", 2))
-    throw Error("가상 모니터를 설정하는증에 오류가 발생했습니다")
+    throw Error("가상 모니터를 설정하는증에 오류가 발생했습니다 code 2")
 
   if RunWait(get_command("scripts/configurate_monitor.ahk", 3))
-    throw Error("가상 모니터 정보를 가져오는증에 오류가 발생했습니다")
+    throw Error("가상 모니터 정보를 가져오는증에 오류가 발생했습니다 code 3")
+
+  if !FileExist("scripts/.tmp")
+    throw Error("가상 모니터 정보를 불러오는증에 오류가 발생했습니다 code 4")
 
   monitor_settings := StrSplit(FileRead("scripts/.tmp"), ",")
   if (monitor_settings.Length != 4)
-    throw Error("가상 모니터 정보를 불러오는증에 오류가 발생했습니다")
+    throw Error("가상 모니터 정보를 불러오는증에 오류가 발생했습니다 code 5")
 
   width := monitor_settings[1]
   height := monitor_settings[2]
@@ -78,10 +81,10 @@ try {
   fname := 'record-' FormatTime(A_Now, "yyyy-MM-dd-hh-mm-ss") '.mp4'
   ffmpeg := 'ffmpeg -f dshow -i audio="virtual-audio-capturer" -f gdigrab -framerate ' VIDEO_FRAMERATE ' -offset_x ' offset_x ' -offset_y ' offset_y ' -video_size ' width 'x' height ' -i desktop -c:v libx264 -crf 23 -pix_fmt yuv420p -c:a libmp3lame -b:a 192k -t ' duration " " dir fname
   if RunWait(A_ComSpec ' /c powershell.exe "' ffmpeg)
-  	throw Error("정상적으로 녹화되지 않았습니다")
+  	throw Error("정상적으로 녹화되지 않았습니다 code 6")
 
   if RunWait(get_command("scripts/configurate_monitor.ahk", 0))
-    throw Error("가상 모니터를 종료하는중에 오류가 발생했습니다")
+    throw Error("가상 모니터를 종료하는중에 오류가 발생했습니다 code 7")
 } catch as e { 
   if (IsObject(e)){
     MsgBox(e.Stack . "`n`n" . e.Message)

@@ -34,6 +34,7 @@ try {
   if (result != 0) 
     throw Error("Failed to query display config. Error code: " . result)
 
+  found := false
   Loop NumGet(path_count, "UInt") {
     idx := A_index
     offset := (idx - 1) * SIZEOF_DISPLAYCONFIG_PATH_INFO
@@ -62,6 +63,7 @@ try {
     if (StrGet(device_info_buffer.Ptr + SIZEOF_DEVICE_INFO_HEADER + 16, Encoding := "UTF-16") != TARGET_DEVICE_NAME) ;; TODO: v3 내가 설치했다는 표시가 없음. 구현방법 모색
       continue
     
+    found := true
     switch RUN_MODE {
       case 0, 1:
         NumPut("UInt", 0xffff0000, path_buffer, offset + 12)
@@ -97,11 +99,13 @@ try {
     if (result != 0) 
       throw Error("Failed to set display config. Error code: " . result)
   }
-} catch as e { 
+
+  if !found 
+    throw Error("Failed to find target device")
+} catch as e {
   if (IsObject(e)){
     MsgBox(e.Stack . "`n`n" . e.Message)
   } else
     MsgBox("Error: " . e)
-
-  ExitApp -1
+  ExitApp 1
 }
