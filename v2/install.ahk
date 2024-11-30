@@ -34,5 +34,18 @@ install_ffmpeg() {
   } 
 }
 
-init_ini()
-install_ffmpeg()
+install_audio_capturer() {
+  bin_dir := A_ScriptDir "\bin"
+  DirCreate(bin_dir)
+
+  url := "https://sourceforge.net/projects/screencapturer/files/Setup%20Screen%20Capturer%20Recorder%20v0.12.11.exe/download"
+  exe := bin_dir "\capturer_setup.exe"
+  Download(url, exe)
+  if RunWait(exe) {
+    throw Error("오디오 캡처러를 설치하는데 오류가 발생했습니다 code 1")
+  }
+}
+
+; init_ini()
+; install_ffmpeg()
+install_audio_capturer()
