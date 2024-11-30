@@ -46,6 +46,6 @@ install_audio_capturer() {
   }
 }
 
-; init_ini()
-; install_ffmpeg()
+init_ini()
+install_ffmpeg()
 install_audio_capturer()
