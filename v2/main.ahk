@@ -66,7 +66,7 @@ try {
 
   dir := (SAVE_DIR ? SAVE_DIR : A_WorkingDir) "\"
   fname := 'record-' FormatTime(A_Now, "yyyy-MM-dd-hh-mm-ss") '.mp4'
-  ffmpeg := 'ffmpeg -f dshow -i audio="virtual-audio-capturer" -f gdigrab -framerate ' VIDEO_FRAMERATE ' -offset_x ' offset_x ' -offset_y ' offset_y ' -video_size ' width 'x' height ' -i desktop -c:v libx264 -crf 23 -pix_fmt yuv420p -c:a libmp3lame -b:a 192k -t ' duration " " dir fname
+  ffmpeg := 'bin\ffmpeg -f dshow -i audio="virtual-audio-capturer" -f gdigrab -framerate ' VIDEO_FRAMERATE ' -offset_x ' offset_x ' -offset_y ' offset_y ' -video_size ' width 'x' height ' -i desktop -c:v libx264 -crf 23 -pix_fmt yuv420p -c:a libmp3lame -b:a 192k -t ' duration " " dir fname
   if RunWait(A_ComSpec ' /c powershell.exe "' ffmpeg)
   	throw Error("정상적으로 녹화되지 않았습니다 code 6")
 
