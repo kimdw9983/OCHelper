@@ -1,8 +1,8 @@
 #Requires AutoHotkey v2.0
 
 init_ini() {
-  IniWrite("Zoom Workplace", "config.ini", "General", "window_title")
-  IniWrite("Linux FHD", "config.ini", "General", "device_name")
+  IniWrite("Zoom 회의", "config.ini", "General", "window_title")
+  IniWrite("IDD HDR", "config.ini", "General", "device_name")
   
   IniWrite("30", "config.ini", "Video", "framerate")
   IniWrite("1920", "config.ini", "Video", "width")

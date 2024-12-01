@@ -59,23 +59,10 @@ try {
   offset_y := monitor_settings[4]
 
   Sleep(3000) ; TODO find a reliable way to wait for the monitor to be ready
-  ; attempt := 0
-  ; pColor := PixelGetColor(offset_x + 50, offset_y + 50, "Slow")
-  ; while attempt < 20 {
-  ;   npColor := PixelGetColor(offset_x + 50, offset_y + 50, "Slow")
-  ;   if (pColor == npColor)
-  ;     break
-    
-  ;   pColor := npColor
-  ;   Sleep 200
-  ;   attempt++
-  ; }
-
-  ; if (attempt == 20)
-  ;   throw Error("가상 모니터를 초기화 하는 중에 오류가 발생했습니다")
-
   WinMaximize(WINDOW_TITLE)
   WinMove(offset_x, offset_y, , ,WINDOW_TITLE)
+  WinActivate(WINDOW_TITLE)
+  Sleep(1000)
 
   dir := (SAVE_DIR ? SAVE_DIR : A_WorkingDir) "\"
   fname := 'record-' FormatTime(A_Now, "yyyy-MM-dd-hh-mm-ss") '.mp4'
