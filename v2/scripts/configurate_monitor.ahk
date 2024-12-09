@@ -1,6 +1,7 @@
 #Requires AutoHotkey v2.0
+#include convex_hull.ahk
 
-RUN_MODE := A_Args[1] ; 0: enable, 1: position, 2: get position
+RUN_MODE := A_Args[1]
 
 TARGET_DEVICE_NAME := EnvGet("DEVICE_NAME")
 WIDTH := EnvGet("WIDTH")
@@ -16,6 +17,7 @@ SIZEOF_DISPLAYCONFIG_MODE_INFO := 64
 SIZEOF_DEVICE_INFO_HEADER := 20
 SIZEOF_TARGET_DEVICE_NAME := 420
 
+points := []
 try {
   path_count := Buffer(4)
   mode_count := Buffer(4)
@@ -34,7 +36,7 @@ try {
   if (result != 0) 
     throw Error("Failed to query display config. Error code: " . result)
 
-  found := false
+  valid := false
   Loop NumGet(path_count, "UInt") {
     idx := A_index
     offset := (idx - 1) * SIZEOF_DISPLAYCONFIG_PATH_INFO
@@ -60,10 +62,27 @@ try {
     if (result != 0) 
       throw Error("Failed to get device info. Error code: " . result)
 
+    if RUN_MODE == 4 {
+      offset := source_mode_index * SIZEOF_DISPLAYCONFIG_MODE_INFO
+      if source_mode_index == 0xffffffff
+        continue
+
+      width := NumGet(mode_buffer, offset + 16, "UInt")
+      height := NumGet(mode_buffer, offset + 20, "UInt")
+      pX := NumGet(mode_buffer, offset + 28, "int")
+      pY := NumGet(mode_buffer, offset + 32, "int")
+      
+      points.Push([pX, pY])
+      points.Push([pX + width, pY])
+      points.Push([pX + width, pY + height])
+      points.Push([pX, pY + height])
+      continue
+    }
+
     if (StrGet(device_info_buffer.Ptr + SIZEOF_DEVICE_INFO_HEADER + 16, Encoding := "UTF-16") != TARGET_DEVICE_NAME) ;; TODO: v3 내가 설치했다는 표시가 없음. 구현방법 모색
       continue
     
-    found := true
+    valid := true
     switch RUN_MODE {
       case 0, 1:
         NumPut("UInt", 0xffff0000, path_buffer, offset + 12)
@@ -71,10 +90,9 @@ try {
         NumPut("UInt", RUN_MODE, path_buffer, offset + 68)
       case 2:
         offset := source_mode_index * SIZEOF_DISPLAYCONFIG_MODE_INFO
-      
-        ; TODO: v3 calculate most isolated position using convex hull
-        positionX := -9999
-        positionY := -9999  
+
+        positionX := EnvGet("POSITION_X")
+        positionY := EnvGet("POSITION_Y")
         
         NumPut("UInt", WIDTH, mode_buffer, offset + 16)
         NumPut("UInt", HEIGHT, mode_buffer, offset + 20)
@@ -100,11 +118,22 @@ try {
       throw Error("Failed to set display config. Error code: " . result)
   }
 
-  if !found 
-    throw Error("Failed to find target device")
+  if RUN_MODE == 4 {
+    P := Sorted(andrews(points))[1]
+    x := P[1]
+    y := P[2]
+    if FileExist(".tmp")
+      FileDelete(".tmp")
+    FileAppend(x "," y, ".tmp")
+    valid := true
+  }
+
+  if !valid 
+    throw Error(RUN_MODE < 4 ? "Failed to find target device" : "Failed to find target device for getting position")
+
 } catch as e {
   if (IsObject(e)){
-    MsgBox(e.Stack . "`n`n" . e.Message)
+    MsgBox(e.Stack . "`n`n" . e.Message "`non line " e.Line)
   } else
     MsgBox("Error: " . e)
   ExitApp 1

@@ -4,6 +4,7 @@ APP_NAME := "OLHelper"
 
 WINDOW_TITLE := IniRead("config.ini", "General", "window_title")
 DEVICE_NAME := IniRead("config.ini", "General", "device_name")
+DEV_MODE := IniRead("config.ini", "General", "dev_mode", 0)
 
 VIDEO_FRAMERATE := IniRead("config.ini", "Video", "framerate")
 VIDEO_WIDTH := IniRead("config.ini", "Video", "width")
@@ -25,7 +26,7 @@ get_command(dir, args*) {
   return Format("{1} {2} {3}", AHK_PATH, dir, params)
 }
 
-if !WinExist(WINDOW_TITLE) {
+if !WinExist(WINDOW_TITLE) && DEV_MODE == 0 {
 	MsgBox("녹화할 대상 프로그램(" WINDOW_TITLE ")을 먼저 실행해야합니다")
 	ExitApp
 }    
@@ -37,41 +38,67 @@ if ib.Result = "Cancel"
 duration := ib.value
 
 try {
+  if RunWait(get_command("scripts/configurate_monitor.ahk", 4))
+    throw Error("가상 모니터 정보를 가져오는증에 오류가 발생했습니다")
+
+  coord := StrSplit(FileRead("scripts/.tmp"), ",")
+  if (coord.Length != 2)
+    throw Error("가상 모니터 정보를 불러오는증에 오류가 발생했습니다")
+  
+  EnvSet("POSITION_X", coord[1])
+  EnvSet("POSITION_Y", coord[2])
+  
   if RunWait(get_command("scripts/configurate_monitor.ahk", 1))
-    throw Error("가상 모니터를 켜는증에 오류가 발생했습니다 code 1")
+    throw Error("가상 모니터를 켜는증에 오류가 발생했습니다")
 
   if RunWait(get_command("scripts/configurate_monitor.ahk", 2))
-    throw Error("가상 모니터를 설정하는증에 오류가 발생했습니다 code 2")
+    throw Error("가상 모니터를 설정하는증에 오류가 발생했습니다")
 
   if RunWait(get_command("scripts/configurate_monitor.ahk", 3))
-    throw Error("가상 모니터 정보를 가져오는증에 오류가 발생했습니다 code 3")
+    throw Error("가상 모니터 정보를 가져오는증에 오류가 발생했습니다")
 
   if !FileExist("scripts/.tmp")
-    throw Error("가상 모니터 정보를 불러오는증에 오류가 발생했습니다 code 4")
+    throw Error("가상 모니터 정보를 불러오는증에 오류가 발생했습니다")
 
   monitor_settings := StrSplit(FileRead("scripts/.tmp"), ",")
   if (monitor_settings.Length != 4)
-    throw Error("가상 모니터 정보를 불러오는증에 오류가 발생했습니다 code 5")
+    throw Error("가상 모니터 정보를 불러오는증에 오류가 발생했습니다")
 
   width := monitor_settings[1]
   height := monitor_settings[2]
   offset_x := monitor_settings[3]
   offset_y := monitor_settings[4]
 
-  Sleep(3000) ; TODO find a reliable way to wait for the monitor to be ready
+  ; TODO find a reliable way to wait for the monitor to be ready
+  Sleep(3000) 
   WinMaximize(WINDOW_TITLE)
   WinMove(offset_x, offset_y, , ,WINDOW_TITLE)
-  WinActivate(WINDOW_TITLE)
-  Sleep(1000)
+  Sleep(500)
+  
+  if RunWait(get_command("scripts/configurate_monitor.ahk", 0))
+    throw Error("가상 모니터를 종료하는중에 오류가 발생했습니다")
+  
+  if RunWait(get_command("scripts/configurate_monitor.ahk", 1))
+    throw Error("가상 모니터를 종료하는중에 오류가 발생했습니다")
+
+  if RunWait(get_command("scripts/configurate_monitor.ahk", 2))
+    throw Error("가상 모니터 정보를 가져오는증에 오류가 발생했습니다")
+
+  Sleep(3000) ; Zoom meeting issue - Wierd behavior that the first record cannot render screen correctly on virtual monitor
+  WinMaximize(WINDOW_TITLE)
+  WinMove(offset_x, offset_y, , ,WINDOW_TITLE)
+  Sleep(500)
 
   dir := (SAVE_DIR ? SAVE_DIR : A_WorkingDir) "\"
   fname := 'record-' FormatTime(A_Now, "yyyy-MM-dd-hh-mm-ss") '.mp4'
   ffmpeg := 'bin\ffmpeg -f dshow -i audio="virtual-audio-capturer" -f gdigrab -framerate ' VIDEO_FRAMERATE ' -offset_x ' offset_x ' -offset_y ' offset_y ' -video_size ' width 'x' height ' -i desktop -c:v libx264 -crf 23 -pix_fmt yuv420p -c:a libmp3lame -b:a 192k -t ' duration " " dir fname
+  if DEV_MODE 
+    A_Clipboard := ffmpeg
   if RunWait(A_ComSpec ' /c powershell.exe "' ffmpeg)
-  	throw Error("정상적으로 녹화되지 않았습니다 code 6")
+  	throw Error("정상적으로 녹화되지 않았1습니다")
 
   if RunWait(get_command("scripts/configurate_monitor.ahk", 0))
-    throw Error("가상 모니터를 종료하는중에 오류가 발생했습니다 code 7")
+    throw Error("가상 모니터를 종료하는중에 오류가 발생했습니다")
 } catch as e { 
   if (IsObject(e)){
     MsgBox(e.Stack . "`n`n" . e.Message)
